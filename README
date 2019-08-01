@@ -1,0 +1,72 @@
+                                    README
+
+Question 1:
+
+  main.c:
+  Main allocates and attaches four shared memory segments (see Q3 for details).
+  Then Main prints the input arrays. Next main creates the argument arrays for
+  for qsort and merge (see Q5 and Q6 for details). A child is created for each
+  and execvp() is used for each child. Main then waits for both to finish. Then
+  prints the results of both. Finally, main cleans up all allocated resources
+  and exits.
+
+  qsort.c:
+  Qsort reads in the arguments from main, attaches the shared memory, and
+  performs quicksort on a[]. After each partition, both subproblems are handled
+  by new child processes recursively using qsort. A process does not exit until
+  all of its child processes are finished (subproblems are solved). Qsort exits
+  when a[] is fully sorted.
+
+  merge.c:
+  Merge reads in the arguments from main, attaches the shared memory, and
+  merges the arrays x[] and y[] into the output array. A separate child is
+  created for each element in x[] and y[]. These children use a modified binary
+  search to find the proper location of its element in the output array. Merge
+  exits after all children have finished.
+
+Question 2:
+  Odd question. It works using the logic detailed in question 1. I follow all
+  of the specifications. I do unit testing and check for errors and memory
+  leaks using valgrind. Not exactly sure what this question is looking for.
+
+Question 3:
+  Main allocates and attaches four shared memory segments. One for a[] (the
+  array for quick sort), and three for binary merge. One for x[] and one for
+  y[]. The last segment is for the output array (henceforth z[]).
+  The size of the memory for a[] is k as read from stdin. The size of x[] and
+  y[] are m and n, respectively, as read from stdin. z[] is size m+n. keeping
+  all of these arrays as separate segments makes them easier to keep track of.
+
+Question 4:
+  There are no race conditions in my program. The memory for x[] and y[] is
+  only writen to at the start before any child processes exist. After this
+  point, it is only read. The memory for z[] is never read while child
+  processes exist. As for a[], the subproblems created by quicksort do not
+  have any overlap, so no race conditions are possible.
+
+  As for the program specification, all of the arrays could be in the same
+  shared memory segment. So if x[] and y[] were "next" to each other in the
+  memory, I suppose if you had z[] use the same space as x[] and y[], you
+  would create race conditions. The specifications do not explicitly forbid
+  this, but the output of the merged array would not match specifications.
+  So, indirectly this is not allowed. In, conclusion, race conditions would
+  interfere with the correct output, so the specifications technically forbit
+  race conditions.
+
+Question 5:
+  char **argQ;
+  Dynamically allocated.
+  argQ holds 5 arguments: the filename ("qsort"), the lower bound for quicksort
+  (initially 0), the upper bound (initially k-1), the size of a[] (always k),
+  and the id of the shared memory containing a[]. Then the array is terminated
+  with a NULL pointer. Then argQ is passed using execvp().
+
+Question 6:
+  char **argM;
+  Dynamically allocated.
+  argM holds 6 arguments: the filename "merge", the size of x[] (always m),
+  the size of y[] (always n), the id of the shared memory containing x[], the
+  id of the shared memory containing y[], and the id of the shared memory for
+  z[]. Then the array is terminated with a NULL pointer. Then argM is passed
+  using execvp().
+
